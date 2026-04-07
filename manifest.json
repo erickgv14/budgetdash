@@ -2,7 +2,7 @@
   "name": "BudgetDash Personal Finance",
   "short_name": "BudgetDash",
   "description": "Premium personal finance and allowance tracker.",
-  "start_url": "./budget_tracker.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#8b5cf6",
