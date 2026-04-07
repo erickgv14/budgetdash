@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetDash — Personal Finance</title>
+    
+    <!-- PWA / iOS Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BudgetDash">
+    <meta name="theme-color" content="#09090b">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #09090b;
+            --bg-surface: #18181b;
+            --bg-card: #27272a;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --accent-primary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --border-subtle: #3f3f46;
+            --sidebar-width: 260px;
+            --right-panel-width: 320px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* Desktop Layout (Grid) */
+        .app-container {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr var(--right-panel-width);
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            background-color: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.05em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--accent-primary);
+        }
+
+        nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .balance-card-mini {
+            margin-top: auto;
+            background: linear-gradient(135deg, #2e1065, #8b5cf6);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Main Content */
+        main {
+            padding: 40px;
+            overflow-y: auto;
+            background: radial-gradient(circle at 50% 0%, #1e1b4b, transparent 50%);
+        }
+
+        .view-section {
+            display: none;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .view-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        /* Cards and Sections */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+
+        .grid-forms {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            background-color: var(--bg-surface);
+            border-left: 1px solid var(--border-subtle);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .section-header {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        /* Form Elements */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-deep);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: filter 0.2s;
+        }
+
+        .btn-primary { background: var(--accent-primary); color: white; }
+        .btn-success { background: var(--accent-success); color: white; }
+        .btn-danger { background: var(--accent-danger); color: white; }
+        .btn:hover { filter: brightness(1.1); }
+
+        /* Transactions Table/List */
+        .tx-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .tx-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-deep);
+            border-radius: 12px;
+            border: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .tx-item:hover {
+            border-color: var(--border-subtle);
+        }
+
+        .tx-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tx-name { font-weight: 600; }
+        .tx-cat { font-size: 0.75rem; color: var(--text-secondary); }
+        .tx-amount { font-weight: 700; color: var(--accent-danger); }
+        .tx-amount.pos { color: var(--accent-success); }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .delete-btn:hover { color: var(--accent-danger); background: rgba(239, 68, 68, 0.1); }
+
+        /* Wishlist specific */
+        .wish-item {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 20px;
+            background: var(--bg-deep);
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .wish-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .wish-price { font-size: 1.25rem; font-weight: 700; color: var(--accent-primary); }
+        .wish-notes { font-size: 0.875rem; color: var(--text-secondary); }
+
+        /* Mobile Adjustments */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            aside {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 70px;
+                flex-direction: row;
+                justify-content: space-around;
+                padding: 0;
+                z-index: 100;
+                border-top: 1px solid var(--border-subtle);
+                border-right: none;
+            }
+            .brand, .balance-card-mini { display: none; }
+            nav { flex-direction: row; width: 100%; justify-content: space-evenly; }
+            main { padding: 20px; padding-bottom: 100px; }
+            .right-panel { display: none; }
+            .grid-forms { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside>
+            <div class="brand">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                BudgetDash
+            </div>
+            <nav>
+                <div class="nav-item active" onclick="switchView('dashboard', this)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Dashboard
+                </div>
+                <div class="nav-item" onclick="switchView('wishlist', this)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    Wishlist
+                </div>
+                <div class="nav-item" onclick="switchView('history', this)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    History
+                </div>
+                <div class="nav-item" onclick="archiveMonth()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg>
+                    New Month
+                </div>
+            </nav>
+
+            <div class="balance-card-mini">
+                <span style="font-size: 0.8rem; opacity: 0.8; font-weight: 500;">AVAILABLE BALANCE</span>
+                <div id="sideBalance" style="font-size: 1.5rem; font-weight: 700; margin-top: 4px;">$0.00</div>
+            </div>
+        </aside>
+
+        <!-- Main View -->
+        <main>
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="view-section active">
+                <div class="header-row">
+                    <h1 class="page-title">Financial Overview</h1>
+                    <div id="topBalance" style="font-size: 2rem; font-weight: 800; color: var(--accent-success)">$0.00</div>
+                </div>
+
+                <div class="grid-forms">
+                    <div class="card">
+                        <span class="section-header">Quick Log</span>
+                        <div class="input-group">
+                            <label>Expense Name</label>
+                            <input type="text" id="expName" placeholder="Where did it go?">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="input-group">
+                                <label>Amount ($)</label>
+                                <input type="number" id="expAmount" step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="input-group">
+                                <label>Category</label>
+                                <select id="expCategory">
+                                    <option value="Food">Food</option>
+                                    <option value="Fun">Fun</option>
+                                    <option value="Transport">Transport</option>
+                                    <option value="Subscriptions">Subs</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="addExpense()">Record Transaction</button>
+                    </div>
+
+                    <div class="card">
+                        <span class="section-header">Monthly Statistics</span>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary)">Allowance</span>
+                                <span style="font-weight: 600;">$1,100.00</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary)">Total Spent</span>
+                                <span id="statSpent" style="font-weight: 600; color: var(--accent-danger)">$0.00</span>
+                            </div>
+                            <div style="margin-top: 4px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 500;">Budget Usage</span>
+                                    <span id="statPercent" style="font-weight: 700; font-size: 0.75rem; color: var(--accent-primary);">0%</span>
+                                </div>
+                                <div style="width: 100%; height: 12px; background: var(--bg-deep); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-subtle);">
+                                    <div id="progressFill" style="height: 100%; background: var(--accent-primary); width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <span class="section-header">Recent Transactions</span>
+                    <div id="loggedList" class="tx-list"></div>
+                </div>
+            </section>
+
+            <!-- Wishlist Section -->
+            <section id="wishlist" class="view-section">
+                <div class="header-row">
+                    <h1 class="page-title">The Wishlist</h1>
+                </div>
+
+                <div class="grid-forms" style="grid-template-columns: 350px 1fr;">
+                    <div class="card" style="height: fit-content;">
+                        <span class="section-header">Add To Wishlist</span>
+                        <div class="input-group">
+                            <label>Item Name</label>
+                            <input type="text" id="wishName" placeholder="Future splurge...">
+                        </div>
+                        <div class="input-group">
+                            <label>Estimated Price ($)</label>
+                            <input type="number" id="wishPrice" step="0.01" placeholder="0.00">
+                        </div>
+                        <div class="input-group">
+                            <label>Notes (Optional)</label>
+                            <textarea id="wishNotes" rows="3" placeholder="Why do I want this?"></textarea>
+                        </div>
+                        <button class="btn btn-success" onclick="addToWishlist()">Add to Wishlist</button>
+                    </div>
+
+                    <div id="wishlistContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                        <!-- Wishlist cards here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="history" class="view-section">
+                <div class="header-row">
+                    <h1 class="page-title">Monthly History</h1>
+                </div>
+
+                <div id="historyContainer" class="tx-list" style="max-width: 600px;">
+                    <!-- Archived months will appear here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Right Panel (Recurring) -->
+        <div class="right-panel">
+            <span class="section-header">Recurring Subscriptions</span>
+            <div id="recurringList" class="tx-list" style="margin-bottom: 24px;"></div>
+            
+            <div class="card" style="background: var(--bg-deep); border-style: dashed;">
+                <span class="section-header" style="font-size: 0.7rem;">New Recurring</span>
+                <input type="text" id="recName" placeholder="Name" style="margin-bottom: 8px;">
+                <input type="number" id="recAmount" step="0.01" placeholder="Price" style="margin-bottom: 12px;">
+                <button class="btn btn-primary" style="padding: 8px;" onclick="addRecurring()">Add Recurring</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ALLOWANCE = 1100;
+        let state = {
+            loggedExpenses: [],
+            recurringExpenses: [
+                { id: Date.now(), name: 'GamePass', amount: 30 }
+            ],
+            wishlist: [],
+            history: []
+        };
+
+        function switchView(viewId, el) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById(viewId).classList.add('active');
+            if (el) el.classList.add('active');
+            
+            if (viewId === 'history') renderHistory();
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('budgetDashState');
+            if (saved) {
+                const loaded = JSON.parse(saved);
+                state = { ...state, ...loaded };
+            }
+            updateUI();
+        }
+
+        function saveState() {
+            localStorage.setItem('budgetDashState', JSON.stringify(state));
+        }
+
+        function archiveMonth() {
+            const monthName = prompt("Enter a name for this month (e.g., March 2026):", 
+                new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }));
+            
+            if (!monthName) return;
+
+            const loggedTotal = state.loggedExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const recurringTotal = state.recurringExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const totalSpent = loggedTotal + recurringTotal;
+
+            state.history.push({
+                id: Date.now(),
+                name: monthName,
+                totalSpent: totalSpent,
+                allowance: ALLOWANCE,
+                date: new Date().toISOString()
+            });
+
+            state.loggedExpenses = [];
+            saveState();
+            updateUI();
+            alert(`Archived ${monthName}! Transitioning to a new month.`);
+            switchView('dashboard', document.querySelector('.nav-item'));
+        }
+
+        function deleteHistory(id) {
+            if (confirm("Delete this history record?")) {
+                state.history = state.history.filter(h => h.id !== id);
+                saveState();
+                renderHistory();
+            }
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            container.innerHTML = state.history.length ? '' : '<div style="color: var(--text-secondary); text-align: center; padding: 20px;">No history yet.</div>';
+            
+            [...state.history].reverse().forEach(h => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.marginBottom = '16px';
+                
+                const percent = (h.totalSpent / h.allowance) * 100;
+                const isOver = h.totalSpent > h.allowance;
+
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div>
+                            <h3 style="font-size: 1.1rem; font-weight: 600;">${h.name}</h3>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary);">${new Date(h.date).toLocaleDateString()}</span>
+                        </div>
+                        <button class="delete-btn" onclick="deleteHistory(${h.id})">✕</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary)">Spent: $${h.totalSpent.toFixed(2)}</span>
+                        <span style="font-weight: 700; color: ${isOver ? 'var(--accent-danger)' : 'var(--accent-success)'}">${percent.toFixed(1)}% used</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background: var(--bg-deep); border-radius: 3px; overflow: hidden;">
+                        <div style="height: 100%; width: ${Math.min(percent, 100)}%; background: ${isOver ? 'var(--accent-danger)' : 'var(--accent-primary)'}"></div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addExpense(nameInput = 'expName', amountInput = 'expAmount', catInput = 'expCategory') {
+            const name = document.getElementById(nameInput).value;
+            const amount = parseFloat(document.getElementById(amountInput).value);
+            const category = document.getElementById(catInput).value;
+
+            if (!name || isNaN(amount)) return alert('Please enter name and amount.');
+
+            state.loggedExpenses.push({ id: Date.now(), name, amount, category });
+            
+            document.getElementById(nameInput).value = '';
+            document.getElementById(amountInput).value = '';
+            
+            saveState();
+            updateUI();
+        }
+
+        function addRecurring() {
+            const name = document.getElementById('recName').value;
+            const amount = parseFloat(document.getElementById('recAmount').value);
+            if (!name || isNaN(amount)) return;
+
+            state.recurringExpenses.push({ id: Date.now(), name, amount });
+            document.getElementById('recName').value = '';
+            document.getElementById('recAmount').value = '';
+            saveState();
+            updateUI();
+        }
+
+        function addToWishlist() {
+            const name = document.getElementById('wishName').value;
+            const price = parseFloat(document.getElementById('wishPrice').value);
+            const notes = document.getElementById('wishNotes').value;
+
+            if (!name || isNaN(price)) return;
+
+            state.wishlist.push({ id: Date.now(), name, price, notes });
+            
+            document.getElementById('wishName').value = '';
+            document.getElementById('wishPrice').value = '';
+            document.getElementById('wishNotes').value = '';
+            
+            saveState();
+            updateUI();
+        }
+
+        function purchaseWishItem(id) {
+            const item = state.wishlist.find(i => i.id === id);
+            if (!item) return;
+
+            // Log it with metadata to allow restoration
+            state.loggedExpenses.push({
+                id: Date.now(),
+                name: `[Wish] ${item.name}`,
+                amount: item.price,
+                category: 'Other',
+                isWish: true,
+                originalNotes: item.notes
+            });
+
+            // Remove from wishlist
+            state.wishlist = state.wishlist.filter(i => i.id !== id);
+            
+            saveState();
+            updateUI();
+            alert(`Purchased ${item.name}! Check your dashboard.`);
+        }
+
+        function deleteLogged(id) {
+            const expense = state.loggedExpenses.find(e => e.id === id);
+            
+            // If it was a wishlist item, put it back
+            if (expense && expense.isWish) {
+                state.wishlist.push({
+                    id: Date.now(),
+                    name: expense.name.replace('[Wish] ', ''),
+                    price: expense.amount,
+                    notes: expense.originalNotes || ''
+                });
+            }
+
+            state.loggedExpenses = state.loggedExpenses.filter(e => e.id !== id);
+            saveState();
+            updateUI();
+        }
+
+        function deleteRecurring(id) {
+            state.recurringExpenses = state.recurringExpenses.filter(e => e.id !== id);
+            saveState();
+            updateUI();
+        }
+
+        function deleteWish(id) {
+            state.wishlist = state.wishlist.filter(i => i.id !== id);
+            saveState();
+            updateUI();
+        }
+
+        function updateUI() {
+            const loggedTotal = state.loggedExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const recurringTotal = state.recurringExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const totalSpent = loggedTotal + recurringTotal;
+            const remaining = ALLOWANCE - totalSpent;
+
+            const format = (num) => `$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+            document.getElementById('sideBalance').textContent = format(remaining);
+            document.getElementById('topBalance').textContent = format(remaining);
+            document.getElementById('statSpent').textContent = format(totalSpent);
+            
+            const progressPercent = (totalSpent / ALLOWANCE) * 100;
+            const progressWidth = Math.min(progressPercent, 100);
+            
+            document.getElementById('progressFill').style.width = `${progressWidth}%`;
+            document.getElementById('statPercent').textContent = `${progressPercent.toFixed(1)}%`;
+            
+            // Color feedback based on budget status
+            const isOverBudget = remaining < 0;
+            document.getElementById('topBalance').style.color = isOverBudget ? 'var(--accent-danger)' : 'var(--accent-success)';
+            document.getElementById('progressFill').style.background = isOverBudget ? 'var(--accent-danger)' : 'var(--accent-primary)';
+            document.getElementById('statPercent').style.color = isOverBudget ? 'var(--accent-danger)' : 'var(--accent-primary)';
+
+            // Render Lists
+            renderList('loggedList', state.loggedExpenses, true);
+            renderList('recurringList', state.recurringExpenses, false, true);
+            renderWishlist();
+        }
+
+        function renderList(containerId, items, isLogged, isRecurring = false) {
+            const el = document.getElementById(containerId);
+            el.innerHTML = items.length ? '' : '<div style="color: var(--text-secondary); text-align: center; padding: 20px;">Empty</div>';
+            
+            [...items].reverse().forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'tx-item';
+                div.innerHTML = `
+                    <div class="tx-info">
+                        <span class="tx-name">${item.name}</span>
+                        <span class="tx-cat">${item.category || (isRecurring ? 'Monthly' : '')}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="tx-amount">-$${item.amount.toFixed(2)}</span>
+                        <button class="delete-btn" onclick="${isLogged ? 'deleteLogged' : 'deleteRecurring'}(${item.id})">✕</button>
+                    </div>
+                `;
+                el.appendChild(div);
+            });
+        }
+
+        function renderWishlist() {
+            const container = document.getElementById('wishlistContainer');
+            container.innerHTML = '';
+            
+            state.wishlist.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'wish-item';
+                div.innerHTML = `
+                    <div class="wish-header">
+                        <span class="tx-name" style="font-size: 1.1rem;">${item.name}</span>
+                        <span class="wish-price">$${item.price.toFixed(2)}</span>
+                    </div>
+                    <p class="wish-notes">${item.notes || 'No notes added'}</p>
+                    <div style="display: flex; gap: 10px; margin-top: auto;">
+                        <button class="btn btn-primary" style="padding: 8px; font-size: 0.8rem;" onclick="purchaseWishItem(${item.id})">Mark Purchased</button>
+                        <button class="btn btn-danger" style="padding: 8px; font-size: 0.8rem; width: 40px;" onclick="deleteWish(${item.id})">✕</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        loadState();
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered', reg))
+                    .catch(err => console.log('SW Failed', err));
+            });
+        }
+    </script>
+</body>
+</html>
