@@ -324,13 +324,16 @@
             }
             main { padding: 20px; padding-bottom: 110px; }
             
-            /* Show recurring at bottom of dashboard on mobile */
+            /* Only show recurring on dashboard view for mobile */
             .right-panel { 
-                display: block; 
+                display: none; 
                 border-left: none;
                 border-top: 1px solid var(--border-subtle);
                 padding: 40px 20px;
                 background: var(--bg-deep);
+            }
+            .dashboard-active .right-panel {
+                display: block;
             }
             
             .grid-forms { grid-template-columns: 1fr; }
@@ -518,6 +521,14 @@
             document.getElementById(viewId).classList.add('active');
             if (el) el.classList.add('active');
             
+            // Toggle dashboard-active class for mobile recurring panel visibility
+            const appContainer = document.querySelector('.app-container');
+            if (viewId === 'dashboard') {
+                appContainer.classList.add('dashboard-active');
+            } else {
+                appContainer.classList.remove('dashboard-active');
+            }
+            
             if (viewId === 'history') renderHistory();
         }
 
@@ -527,6 +538,8 @@
                 const loaded = JSON.parse(saved);
                 state = { ...state, ...loaded };
             }
+            // Ensure initial dashboard-active state is correct
+            document.querySelector('.app-container').classList.add('dashboard-active');
             updateUI();
         }
 
